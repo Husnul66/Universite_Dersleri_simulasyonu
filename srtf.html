@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRTF Simülasyonu</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
+        h2 { color: #2c3e50; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #ddd; }
+        th { background-color: #3498db; color: white; }
+        .btn { background-color: #2ecc71; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-right: 10px; }
+        .btn:hover { background-color: #27ae60; }
+        .btn-reset { background-color: #e74c3c; }
+        .btn-reset:hover { background-color: #c0392b; }
+        .gantt-container { display: flex; margin-top: 20px; height: 60px; background: #fff; border: 1px solid #bdc3c7; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .gantt-block { flex: 1; display: flex; align-items: center; justify-content: center; border-right: 1px solid #bdc3c7; background-color: #ecf0f1; font-weight: bold; }
+        .info-panel { margin-top: 20px; font-size: 18px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>SRTF (Shortest-Remaining-Time-First) Simülatörü</h2>
+    
+    <table id="processTable">
+        <thead>
+            <tr>
+                <th>Proses</th>
+                <th>Varış Zamanı (ms)</th>
+                <th>Burst Süresi (ms)</th>
+                <th>Kalan Süre (ms)</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+    <div>
+        <button class="btn" onclick="stepTime()">Zamanı İlerlet (+1 ms)</button>
+        <button class="btn btn-reset" onclick="resetSim()">Sıfırla</button>
+        <span class="info-panel" style="margin-left: 20px;" id="timeDisplay">Zaman: 0 ms</span>
+    </div>
+
+    <h3 style="margin-top: 30px;">Gantt Şeması</h3>
+    <div class="gantt-container" id="ganttChart"></div>
+
+    <div class="info-panel" id="readyQueueDisplay" style="margin-top: 20px; color: #2980b9;">
+        Hazır Kuyruğu: (Boş)
+    </div>
+
+    <script>
+        // Sınavındaki veriler buraya eklendi
+        const initialData = [
+            { id: 'P1', arrival: 0, burst: 9, remaining: 9 },
+            { id: 'P2', arrival: 2, burst: 6, remaining: 6 },
+            { id: 'P3', arrival: 5, burst: 5, remaining: 5 },
+            { id: 'P4', arrival: 4, burst: 3, remaining: 3 }
+        ];
+
+        let processes = [];
+        let time = 0;
+        let ganttHistory = [];
+
+        function init() {
+            processes = JSON.parse(JSON.stringify(initialData));
+            time = 0;
+            ganttHistory = [];
+            updateUI();
+        }
+
+        function stepTime() {
+            // O anki zamanda gelmiş ve işi bitmemiş prosesleri bul
+            let available = processes.filter(p => p.arrival <= time && p.remaining > 0);
+            
+            if (available.length > 0) {
+                // Kalan süresi en az olanı seç (Eşitlik durumunda önce geleni al)
+                available.sort((a, b) => a.remaining - b.remaining || a.arrival - b.arrival);
+                let runningProcess = available[0];
+                
+                runningProcess.remaining -= 1;
+                ganttHistory.push(runningProcess.id);
+            } else {
+                // Eğer sistemde hala işi bitmemiş ama henüz varış zamanı gelmemiş proses varsa boş bekle
+                if(processes.some(p => p.remaining > 0)) {
+                     ganttHistory.push("Boş");
+                }
+            }
+            
+            time++;
+            updateUI();
+        }
+
+        function resetSim() {
+            init();
+        }
+
+        function updateUI() {
+            document.getElementById('timeDisplay').innerText = `Zaman: ${time} ms`;
+
+            let tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            processes.forEach(p => {
+                tbody.innerHTML += `<tr>
+                    <td>${p.id}</td>
+                    <td>${p.arrival}</td>
+                    <td>${p.burst}</td>
+                    <td style="color: ${p.remaining === 0 ? 'red' : 'black'}; font-weight: bold;">
+                        ${p.remaining === 0 ? "Bitti" : p.remaining}
+                    </td>
+                </tr>`;
+            });
+
+            let ganttDiv = document.getElementById('ganttChart');
+            ganttDiv.innerHTML = '';
+            ganttHistory.forEach(id => {
+                ganttDiv.innerHTML += `<div class="gantt-block" style="background-color: ${id === 'Boş' ? '#ecf0f1' : '#dff9fb'};">${id}</div>`;
+            });
+
+            let available = processes.filter(p => p.arrival <= time && p.remaining > 0);
+            let queueText = available.map(p => `${p.id} (${p.remaining} ms)`).join(" | ");
+            document.getElementById('readyQueueDisplay').innerText = `Hazır Kuyruğu: ${queueText || "(Boş)"}`;
+        }
+
+        init();
+    </script>
+</body>
+</html>

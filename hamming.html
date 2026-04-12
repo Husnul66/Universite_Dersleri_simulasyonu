@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Husnul66 - Hamming Kodlayıcı (FÜ Formatı)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap');
+        body { font-family: 'Fira Code', monospace; }
+        .bit-btn { transition: all 0.2s ease; }
+        .bit-btn:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body class="bg-[#0f172a] text-slate-200 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <a href="./index.html" class="text-blue-400 hover:underline mb-6 inline-block">← Ana Menüye Dön</a>
+        
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-black text-emerald-400 mb-2">Hamming (7,4) Kodlayıcı</h1>
+            <p class="text-slate-400 text-sm">Özel Format: Veri (a0,a1,a2,a3) + Parite (a4,a5,a6)</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700">
+                <h2 class="text-xl font-bold text-white mb-6 border-b border-slate-700 pb-2">1. GÖNDERİCİ (Veri Girişi)</h2>
+                
+                <div class="flex justify-between gap-2 mb-6">
+                    <div class="text-center"><p class="text-xs text-slate-400 mb-1">a0</p><button onclick="toggleTx(0)" id="tx0" class="bit-btn w-12 h-16 bg-blue-600 text-white rounded-lg text-2xl font-bold">0</button></div>
+                    <div class="text-center"><p class="text-xs text-slate-400 mb-1">a1</p><button onclick="toggleTx(1)" id="tx1" class="bit-btn w-12 h-16 bg-blue-600 text-white rounded-lg text-2xl font-bold">0</button></div>
+                    <div class="text-center"><p class="text-xs text-slate-400 mb-1">a2</p><button onclick="toggleTx(2)" id="tx2" class="bit-btn w-12 h-16 bg-blue-600 text-white rounded-lg text-2xl font-bold">0</button></div>
+                    <div class="text-center"><p class="text-xs text-slate-400 mb-1">a3</p><button onclick="toggleTx(3)" id="tx3" class="bit-btn w-12 h-16 bg-blue-600 text-white rounded-lg text-2xl font-bold">0</button></div>
+                </div>
+
+                <div class="bg-slate-900/50 p-4 rounded-xl space-y-3 text-sm">
+                    <p class="text-emerald-400 font-bold">Parite Hesaplamaları:</p>
+                    <p id="calc-a4">a4 = a0 ⊕ a1  a3 = ?</p>
+                    <p id="calc-a5">a5 = a0 ⊕ a2  a3 = ?</p>
+                    <p id="calc-a6">a1 ⊕ a2  a3 = ?</p>
+                </div>
+
+                <div class="mt-6 p-4 bg-emerald-900/20 border border-emerald-500/30 rounded-xl text-center">
+                    <p class="text-xs text-emerald-500 mb-2 font-bold uppercase">Gönderilen Sözcük (Codeword)</p>
+                    <p id="tx-codeword" class="text-3xl font-black tracking-widest text-white">0000000</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700 relative">
+                <h2 class="text-xl font-bold text-white mb-6 border-b border-slate-700 pb-2">2. ALICI (Hata Denetimi)</h2>
+                <p class="text-xs text-slate-400 mb-4">Aşağıdaki bitlere tıklayarak kablodaki bozulmaları (hataları) simüle edebilirsin.</p>
+                
+                <div class="flex justify-between gap-1 mb-6">
+                    <div class="text-center"><p class="text-xs text-slate-400 mb-1">a'0</p><button onclick="toggleRx(0)" id="rx0" class="bit-btn w-10 h-14 bg-slate-700 rounded-lg text-xl font-bold border-2 border-transparent">0</button></div>
+                    <div class="text-center"><p class="text-xs text-slate-400 mb-1">a'1</p><button onclick="toggleRx(1)" id="rx1" class="bit-btn w-10 h-14 bg-slate-700 rounded-lg text-xl font-bold border-2 border-transparent">0</button></div>
+                    <div class="text-center"><p class="text-xs text-slate-400 mb-1">a'2</p><button onclick="toggleRx(2)" id="rx2" class="bit-btn w-10 h-14 bg-slate-700 rounded-lg text-xl font-bold border-2 border-transparent">0</button></div>
+                    <div class="text-center"><p class="text-xs text-slate-400 mb-1">a'3</p><button onclick="toggleRx(3)" id="rx3" class="bit-btn w-10 h-14 bg-slate-700 rounded-lg text-xl font-bold border-2 border-transparent">0</button></div>
+                    <div class="text-center"><p class="text-xs text-emerald-400 mb-1">a'4</p><button onclick="toggleRx(4)" id="rx4" class="bit-btn w-10 h-14 bg-slate-700 rounded-lg text-xl font-bold border-2 border-transparent text-emerald-400">0</button></div>
+                    <div class="text-center"><p class="text-xs text-emerald-400 mb-1">a'5</p><button onclick="toggleRx(5)" id="rx5" class="bit-btn w-10 h-14 bg-slate-700 rounded-lg text-xl font-bold border-2 border-transparent text-emerald-400">0</button></div>
+                    <div class="text-center"><p class="text-xs text-emerald-400 mb-1">a'6</p><button onclick="toggleRx(6)" id="rx6" class="bit-btn w-10 h-14 bg-slate-700 rounded-lg text-xl font-bold border-2 border-transparent text-emerald-400">0</button></div>
+                </div>
+
+                <div class="bg-slate-900/50 p-4 rounded-xl space-y-3 text-sm mb-6">
+                    <p class="text-amber-400 font-bold">Sendrom (Hata) Hesaplaması:</p>
+                    <p id="calc-s4">s4 = a'0 ⊕ a'1  a'3  a'4 = ?</p>
+                    <p id="calc-s5">s5 = a'0 ⊕ a'2  a'3  a'5 = ?</p>
+                    <p id="calc-s6">s6 = a'1 ⊕ a'2  a'3  a'6 = ?</p>
+                </div>
+
+                <div id="error-result" class="p-4 rounded-xl text-center font-bold text-lg">
+                    </div>
+                
+                <button onclick="syncRx()" class="absolute top-6 right-6 text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded text-slate-300">Sıfırla / Eşitle</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tx = [0, 0, 0, 0, 0, 0, 0]; // a0, a1, a2, a3, a4, a5, a6
+        let rx = [0, 0, 0, 0, 0, 0, 0]; 
+
+        function toggleTx(index) {
+            tx[index] = tx[index] === 0 ? 1 : 0;
+            calculateTx();
+            syncRx();
+        }
+
+        function toggleRx(index) {
+            rx[index] = rx[index] === 0 ? 1 : 0;
+            updateRxUI();
+            checkErrors();
+        }
+
+        function calculateTx() {
+            // Hocanın formülleri
+            tx[4] = tx[0] ^ tx[1] ^ tx[3]; // a4
+            tx[5] = tx[0] ^ tx[2] ^ tx[3]; // a5
+            tx[6] = tx[1] ^ tx[2] ^ tx[3]; // a6
+
+            // Arayüzü güncelle
+            for(let i=0; i<4; i++) {
+                let btn = document.getElementById(`tx${i}`);
+                btn.innerText = tx[i];
+                tx[i] ? btn.classList.replace('bg-slate-700', 'bg-blue-600') : btn.classList.replace('bg-blue-600', 'bg-slate-700');
+            }
+
+            document.getElementById('calc-a4').innerText = `a4 = ${tx[0]} ⊕ ${tx[1]} ⊕ ${tx[3]} = ${tx[4]}`;
+            document.getElementById('calc-a5').innerText = `a5 = ${tx[0]} ⊕ ${tx[2]} ⊕ ${tx[3]} = ${tx[5]}`;
+            document.getElementById('calc-a6').innerText = `a6 = ${tx[1]} ⊕ ${tx[2]} ⊕ ${tx[3]} = ${tx[6]}`;
+
+            document.getElementById('tx-codeword').innerText = tx.join('');
+        }
+
+        function syncRx() {
+            rx = [...tx];
+            updateRxUI();
+            checkErrors();
+        }
+
+        function updateRxUI() {
+            for(let i=0; i<7; i++) {
+                let btn = document.getElementById(`rx${i}`);
+                btn.innerText = rx[i];
+                
+                // Eğer hata varsa (tx ile rx uyuşmuyorsa) kırmızı yap
+                if(rx[i] !== tx[i]) {
+                    btn.classList.add('border-red-500', 'text-red-400');
+                    btn.classList.remove('border-transparent');
+                } else {
+                    btn.classList.remove('border-red-500', 'text-red-400');
+                    btn.classList.add('border-transparent');
+                }
+            }
+        }
+
+        function checkErrors() {
+            // Hocanın Sendrom Formülleri
+            let s4 = rx[0] ^ rx[1] ^ rx[3] ^ rx[4];
+            let s5 = rx[0] ^ rx[2] ^ rx[3] ^ rx[5];
+            let s6 = rx[1] ^ rx[2] ^ rx[3] ^ rx[6];
+
+            document.getElementById('calc-s4').innerText = `s4 = ${rx[0]} ⊕ ${rx[1]} ⊕ ${rx[3]} ⊕ ${rx[4]} = ${s4}`;
+            document.getElementById('calc-s5').innerText = `s5 = ${rx[0]} ⊕ ${rx[2]} ⊕ ${rx[3]} ⊕ ${rx[5]} = ${s5}`;
+            document.getElementById('calc-s6').innerText = `s6 = ${rx[1]} ⊕ ${rx[2]} ⊕ ${rx[3]} ⊕ ${rx[6]} = ${s6}`;
+
+            let syndromeStr = `${s4}${s5}${s6}`;
+            let resultDiv = document.getElementById('error-result');
+            
+            // Hocanın Matrisine Göre Hata Tespiti
+            const errorMap = {
+                "000": "HATA YOK (Kusursuz İletim)",
+                "001": "a'6 biti yolda bozulmuş!",
+                "010": "a'5 biti yolda bozulmuş!",
+                "011": "a'2 biti yolda bozulmuş!",
+                "100": "a'4 biti yolda bozulmuş!",
+                "101": "a'1 biti yolda bozulmuş!",
+                "110": "a'0 biti yolda bozulmuş!",
+                "111": "a'3 biti yolda bozulmuş!"
+            };
+
+            let msg = errorMap[syndromeStr];
+            
+            if(syndromeStr === "000") {
+                resultDiv.className = "p-4 rounded-xl text-center font-bold text-lg bg-emerald-900/30 text-emerald-400 border border-emerald-500/50";
+            } else {
+                resultDiv.className = "p-4 rounded-xl text-center font-bold text-lg bg-red-900/30 text-red-400 border border-red-500/50";
+                msg = `SENDROM: [${s4},${s5},${s6}] → ` + msg;
+            }
+            
+            resultDiv.innerText = msg;
+        }
+
+        // İlk başlatma
+        calculateTx();
+        syncRx();
+    </script>
+</body>
+</html>

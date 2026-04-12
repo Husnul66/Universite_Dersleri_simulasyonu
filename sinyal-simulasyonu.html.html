@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sinyal ve Gürültü Simülatörü</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style> body { font-family: monospace; } </style>
+</head>
+<body class="bg-slate-900 text-slate-200 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto">
+        <a href="./index.html" class="text-blue-400 hover:underline mb-6 inline-block">← Ana Menüye Dön</a>
+        <h1 class="text-4xl font-bold text-cyan-400 mb-2">Fiziksel Katman: Sinyal ve Gürültü</h1>
+        <p class="text-slate-400 mb-8">Veriler kabloda elektrik/ışık dalgaları olarak iletilir. Ortamdaki manyetik alanlar sinyale "gürültü" (noise) katarak veriyi bozabilir.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                <label class="block text-cyan-400 font-bold mb-2">Frekans (Hız)</label>
+                <input type="range" id="freq" min="1" max="10" value="3" class="w-full accent-cyan-500">
+                
+                <label class="block text-cyan-400 font-bold mt-4 mb-2">Genlik (Voltaj/Güç)</label>
+                <input type="range" id="amp" min="10" max="80" value="40" class="w-full accent-cyan-500">
+
+                <label class="block text-red-400 font-bold mt-4 mb-2">Ortam Gürültüsü (Noise)</label>
+                <input type="range" id="noise" min="0" max="60" value="0" class="w-full accent-red-500">
+            </div>
+
+            <div class="md:col-span-2 bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                <p class="text-sm text-slate-400 mb-2 font-bold uppercase tracking-widest">Alıcıdaki Sinyal Grafiği</p>
+                <canvas id="signalCanvas" width="500" height="200" class="w-full bg-slate-900 rounded-lg border border-slate-700"></canvas>
+                <p id="statusText" class="mt-4 text-center font-bold text-emerald-400">Veri Hatasız İletiliyor</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('signalCanvas');
+        const ctx = canvas.getContext('2d');
+        const freqInput = document.getElementById('freq');
+        const ampInput = document.getElementById('amp');
+        const noiseInput = document.getElementById('noise');
+        const statusText = document.getElementById('statusText');
+
+        function drawSignal() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const freq = parseInt(freqInput.value);
+            const amp = parseInt(ampInput.value);
+            const noise = parseInt(noiseInput.value);
+
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            
+            for (let i = 0; i < canvas.width; i++) {
+                // Temel Sinüs Dalgası
+                let y = Math.sin(i * freq * 0.02) * amp;
+                // Gürültü Ekle
+                let noiseVal = (Math.random() - 0.5) * noise;
+                y += noiseVal;
+                ctx.lineTo(i, (canvas.height / 2) - y);
+            }
+            
+            ctx.strokeStyle = noise > 35 ? '#ef4444' : '#06b6d4';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            if (noise > 45) {
+                statusText.innerText = "Kritik Hata: Gürültü sinyali yuttu, veri okunamıyor!";
+                statusText.className = "mt-4 text-center font-bold text-red-500";
+            } else if (noise > 20) {
+                statusText.innerText = "Uyarı: Sinyalde bozulmalar var (Hata denetimi gerekli)";
+                statusText.className = "mt-4 text-center font-bold text-amber-500";
+            } else {
+                statusText.innerText = "Veri Hatasız İletiliyor";
+                statusText.className = "mt-4 text-center font-bold text-emerald-500";
+            }
+            requestAnimationFrame(drawSignal);
+        }
+        drawSignal();
+    </script>
+</body>
+</html>

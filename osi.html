@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSI Katman Gezgini</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .layer-btn { transition: all 0.3s ease; }
+        .layer-btn:hover { transform: translateX(8px); }
+        .active-layer { border-left: 6px solid white; box-shadow: 0 0 20px rgba(0,0,0,0.4); }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-[#0f172a] text-slate-100 font-sans min-h-screen p-4 md:p-8">
+    
+    <div class="max-w-6xl mx-auto">
+        <div class="mb-8">
+            <a href="index.html" class="text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-2 mb-4">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Ana Menüye Dön
+            </a>
+            <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">7 Katmanlı OSI Modeli Gezgini</h1>
+        </div>
+
+        <main class="grid grid-cols-1 md:grid-cols-12 gap-8">
+            <div class="md:col-span-4 space-y-3" id="layer-list">
+                </div>
+
+            <div class="md:col-span-8 bg-slate-800/50 rounded-3xl p-8 border border-slate-700 backdrop-blur-md shadow-2xl min-h-[500px]" id="detail-panel">
+                <div class="flex flex-col items-center justify-center h-full text-slate-500 italic space-y-4">
+                    <svg class="w-16 h-16 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <p>İncelemek istediğin katmana tıkla...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const osiData = [
+            { id: 7, name: "Uygulama (Application)", color: "bg-purple-600", pdu: "Veri (Data)", protocols: "HTTP, FTP, SMTP, DNS, Telnet", desc: "Kullanıcının ağ servislerine eriştiği katmandır. Uygulamaların ağ ile iletişim kurmasını sağlar.", analogy: "Mektubu yazan ve zarfa koyan kişi." },
+            { id: 6, name: "Sunum (Presentation)", color: "bg-indigo-600", pdu: "Veri (Data)", protocols: "JPEG, GIF, SSL, TLS, ASCII", desc: "Verinin formatlanması, şifrelenmesi ve sıkıştırılması yapılır. 'Ortak bir dil' oluşturur.", analogy: "Mektubun hangi dilde yazıldığı veya gizli kodlarla yazılması." },
+            { id: 5, name: "Oturum (Session)", color: "bg-blue-600", pdu: "Veri (Data)", protocols: "NetBIOS, RPC, SQL, NFS", desc: "Cihazlar arasındaki diyaloğu başlatır, yönetir ve sonlandırır. Bağlantı senkronizasyonunu sağlar.", analogy: "Telefonu açıp karşı tarafın müsaitliğini kontrol etmek." },
+            { id: 4, name: "Taşıma (Transport)", color: "bg-cyan-600", pdu: "Segment / Datagram", protocols: "TCP, UDP", desc: "Verinin uçtan uca hatasız iletimini sağlar. Akış kontrolü ve hata denetimi yapar.", analogy: "Kargonun takip numarası ve sağlam ulaşıp ulaşmadığının teyidi." },
+            { id: 3, name: "Ağ (Network)", color: "bg-emerald-600", pdu: "Paket (Packet)", protocols: "IP, ICMP, ARP, Router", desc: "Rotalama (Routing) işlemini yapar. Verinin hangi yoldan gideceğini IP adreslerine göre belirler.", analogy: "Zarfın üzerindeki açık adres (Şehir, Mahalle, Sokak)." },
+            { id: 2, name: "Veri Bağı (Data Link)", color: "bg-amber-600", pdu: "Çerçeve (Frame)", protocols: "Ethernet, MAC, Switch, Bridge", desc: "Aynı ağdaki cihazların fiziksel adreslerini (MAC) kullanarak veri iletir. Hata kontrolü yapar.", analogy: "Mektubun apartmandaki doğru daire numarasına (MAC) teslimi." },
+            { id: 1, name: "Fiziksel (Physical)", color: "bg-red-600", pdu: "Bit", protocols: "Hub, Repeater, Kablolar, Fiber", desc: "Verinin elektriksel veya optik sinyallere dönüşüp kablo/hava yoluyla iletildiği katmandır.", analogy: "Mektup kağıdının kendisi veya mürekkep." }
+        ];
+
+        const listContainer = document.getElementById('layer-list');
+        const detailPanel = document.getElementById('detail-panel');
+
+        function showDetail(id) {
+            const layer = osiData.find(l => l.id === id);
+            
+            // Aktif buton görseli güncelleme
+            document.querySelectorAll('.layer-btn').forEach(btn => btn.classList.remove('active-layer', 'ring-2', 'ring-white'));
+            document.getElementById(`btn-${id}`).classList.add('active-layer', 'ring-2', 'ring-white');
+
+            detailPanel.innerHTML = `
+                <div class="fade-in">
+                    <div class="flex items-center gap-4 mb-8">
+                        <span class="text-5xl font-black opacity-20 italic">#${layer.id}</span>
+                        <h2 class="text-4xl font-bold ${layer.color.replace('bg-', 'text-')}">${layer.name}</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-900/40 p-6 rounded-2xl border border-slate-700">
+                            <h3 class="text-slate-500 font-bold mb-3 uppercase text-xs tracking-widest">Görev Tanımı</h3>
+                            <p class="text-slate-200 text-lg leading-relaxed">${layer.desc}</p>
+                        </div>
+                        <div class="bg-slate-900/40 p-6 rounded-2xl border border-slate-700">
+                            <h3 class="text-slate-500 font-bold mb-3 uppercase text-xs tracking-widest">PDU (Birim)</h3>
+                            <p class="text-3xl font-mono text-white">${layer.pdu}</p>
+                        </div>
+                        <div class="bg-slate-900/40 p-6 rounded-2xl border border-slate-700">
+                            <h3 class="text-slate-500 font-bold mb-3 uppercase text-xs tracking-widest">Protokol ve Cihazlar</h3>
+                            <p class="text-blue-300 font-mono text-sm">${layer.protocols}</p>
+                        </div>
+                        <div class="bg-indigo-900/20 p-6 rounded-2xl border border-indigo-500/30">
+                            <h3 class="text-indigo-400 font-bold mb-3 uppercase text-xs tracking-widest">Akılda Tutmak İçin</h3>
+                            <p class="text-slate-200 italic font-serif text-lg">"${layer.analogy}"</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        osiData.forEach(layer => {
+            const btn = document.createElement('button');
+            btn.id = `btn-${layer.id}`;
+            btn.className = `layer-btn w-full ${layer.color} p-5 rounded-2xl flex justify-between items-center font-bold text-xl shadow-lg border-2 border-transparent`;
+            btn.innerHTML = `<span>${layer.id}. ${layer.name.split(' ')[0]}</span> <svg class="w-6 h-6 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>`;
+            btn.onclick = () => showDetail(layer.id);
+            listContainer.appendChild(btn);
+        });
+    </script>
+</body>
+</html>

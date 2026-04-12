@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eşlik Biti (Parity) Kontrolü</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style> body { font-family: monospace; } </style>
+</head>
+<body class="bg-slate-900 text-slate-200 min-h-screen p-8">
+    <div class="max-w-3xl mx-auto">
+        <a href="./index.html" class="text-blue-400 hover:underline mb-6 inline-block">← Ana Menüye Dön</a>
+        <h1 class="text-4xl font-bold text-emerald-400 mb-2">Eşlik Biti (Parity Check)</h1>
+        <p class="text-slate-400 mb-8">Verideki '1' bitlerinin sayısını sayarak sonuna 1 veya 0 ekleme mantığına dayanır.</p>
+
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+            <label class="block text-sm text-slate-400 mb-2">Gönderilecek Veri (Örn: 1011001)</label>
+            <input type="text" id="dataInput" value="1011001" oninput="calculateParity()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-2xl text-white outline-none focus:border-emerald-500 tracking-widest mb-6" maxlength="16">
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-900/50 p-4 rounded-xl border-l-4 border-blue-500">
+                    <h3 class="text-blue-400 text-xs font-bold mb-1">ÇİFT EŞLİK (EVEN PARITY)</h3>
+                    <p class="text-sm text-slate-400 mb-2">Toplam '1' sayısı çift olmalı.</p>
+                    <p class="text-xl" id="evenResult">Hesaplanıyor...</p>
+                </div>
+                <div class="bg-slate-900/50 p-4 rounded-xl border-l-4 border-purple-500">
+                    <h3 class="text-purple-400 text-xs font-bold mb-1">TEK EŞLİK (ODD PARITY)</h3>
+                    <p class="text-sm text-slate-400 mb-2">Toplam '1' sayısı tek olmalı.</p>
+                    <p class="text-xl" id="oddResult">Hesaplanıyor...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculateParity() {
+            let data = document.getElementById('dataInput').value.replace(/[^01]/g, '');
+            if(!data) return;
+            
+            let onesCount = (data.match(/1/g) || []).length;
+            
+            // Çift eşlik için: 1'ler zaten çiftse 0 ekle, tekse 1 ekle.
+            let evenBit = (onesCount % 2 === 0) ? '0' : '1';
+            // Tek eşlik için: 1'ler zaten tekse 0 ekle, çiftse 1 ekle.
+            let oddBit = (onesCount % 2 !== 0) ? '0' : '1';
+
+            document.getElementById('evenResult').innerHTML = `${data} <span class="text-blue-400 font-bold underline">${evenBit}</span>`;
+            document.getElementById('oddResult').innerHTML = `${data} <span class="text-purple-400 font-bold underline">${oddBit}</span>`;
+        }
+        calculateParity();
+    </script>
+</body>
+</html>

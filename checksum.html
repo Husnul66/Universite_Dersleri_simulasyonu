@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checksum (Sağlama Toplamı)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style> body { font-family: monospace; } </style>
+</head>
+<body class="bg-slate-900 text-slate-200 min-h-screen p-8">
+    <div class="max-w-3xl mx-auto">
+        <a href="./index.html" class="text-blue-400 hover:underline mb-6 inline-block">← Ana Menüye Dön</a>
+        <h1 class="text-4xl font-bold text-amber-400 mb-2">Checksum Hesaplayıcı</h1>
+        <p class="text-slate-400 mb-8">Veri blokları toplanır, taşan bit (carry) varsa sonuca eklenir ve sonucun 1'e tümleyeni (tersi) alınır.</p>
+
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+            <div class="flex gap-4 mb-6">
+                <div class="flex-1">
+                    <label class="block text-sm text-slate-400 mb-2">Blok 1 (8-bit)</label>
+                    <input type="text" id="b1" value="10101010" oninput="calcCheck()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-xl text-white outline-none tracking-widest" maxlength="8">
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm text-slate-400 mb-2">Blok 2 (8-bit)</label>
+                    <input type="text" id="b2" value="01010101" oninput="calcCheck()" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-xl text-white outline-none tracking-widest" maxlength="8">
+                </div>
+            </div>
+            
+            <div class="bg-slate-900 p-6 rounded-xl relative">
+                <p class="text-slate-500 mb-2 text-sm">Adım Adım Çözüm:</p>
+                <p id="step1" class="text-lg">Toplama: ...</p>
+                <p id="step2" class="text-lg">Taşma (Carry) Ekleme: ...</p>
+                <hr class="border-slate-700 my-4">
+                <p class="text-sm text-amber-400 mb-1">Nihai Checksum (1'e Tümleyen):</p>
+                <p id="finalCheck" class="text-3xl font-bold text-white tracking-[0.25em]">00000000</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calcCheck() {
+            let b1 = document.getElementById('b1').value.padStart(8, '0');
+            let b2 = document.getElementById('b2').value.padStart(8, '0');
+            
+            // Decimal'e çevirip topla
+            let sum = parseInt(b1, 2) + parseInt(b2, 2);
+            let sumBin = sum.toString(2);
+            
+            document.getElementById('step1').innerText = `1. Adım İkili Toplam: ${sumBin}`;
+            
+            // Eğer 8 biti aşıyorsa (Taşma varsa), baştaki 1'i silip sayıya ekle
+            if (sum > 255) {
+                sum = (sum & 255) + 1; // 255 ile AND'le, carry'yi ekle
+            }
+            
+            let carrySumBin = sum.toString(2).padStart(8, '0');
+            document.getElementById('step2').innerText = `2. Adım Taşan Biti Ekle: ${carrySumBin}`;
+            
+            // 1'e Tümleyen (Tersini alma)
+            let checksum = carrySumBin.split('').map(b => b === '1' ? '0' : '1').join('');
+            document.getElementById('finalCheck').innerText = checksum;
+        }
+        calcCheck();
+    </script>
+</body>
+</html>

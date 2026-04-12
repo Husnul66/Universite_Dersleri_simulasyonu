@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Çerçeveleme (Framing) Simülatörü</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style> body { font-family: monospace; } </style>
+</head>
+<body class="bg-slate-900 text-slate-200 min-h-screen p-8">
+    <div class="max-w-5xl mx-auto">
+        <a href="./index.html" class="text-blue-400 hover:underline mb-6 inline-block">← Ana Menüye Dön</a>
+        <h1 class="text-4xl font-bold text-amber-500 mb-2">Veri Bağı: Çerçeveleme (Framing)</h1>
+        <p class="text-slate-400 mb-8">Üst katmandan gelen veri (Payload), hedefe güvenle ulaşması için MAC başlığı (Header) ve Hata Kontrol kuyruğu (FCS/Trailer) ile sarılır.</p>
+
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+            <div class="flex gap-4 mb-8">
+                <input type="text" id="payload" value="10110011" class="flex-1 bg-slate-900 border border-slate-600 rounded-lg p-3 text-xl text-white outline-none tracking-widest" placeholder="Veri Girin (Örn: 1011)">
+                <button onclick="createFrame()" class="bg-amber-600 hover:bg-amber-500 px-6 py-3 rounded-lg font-bold transition">Çerçeve Oluştur</button>
+            </div>
+
+            <div id="frameDisplay" class="hidden flex flex-col md:flex-row gap-2 items-stretch">
+                <div class="bg-blue-900/50 border border-blue-500 p-4 rounded-lg flex flex-col justify-center items-center flex-1">
+                    <span class="text-blue-400 font-bold text-xs mb-1">BAŞLIK (HEADER)</span>
+                    <span class="text-sm text-slate-300">Hedef MAC | Kaynak MAC</span>
+                </div>
+                <div class="bg-emerald-900/50 border border-emerald-500 p-4 rounded-lg flex flex-col justify-center items-center flex-[2]">
+                    <span class="text-emerald-400 font-bold text-xs mb-1">VERİ (PAYLOAD)</span>
+                    <span id="dataArea" class="text-2xl font-bold text-white tracking-[0.2em]"></span>
+                </div>
+                <div class="bg-red-900/50 border border-red-500 p-4 rounded-lg flex flex-col justify-center items-center flex-1 relative overflow-hidden group">
+                    <span class="text-red-400 font-bold text-xs mb-1">KUYRUK (TRAILER)</span>
+                    <span class="text-sm text-slate-300">FCS / CRC Denetimi</span>
+                </div>
+            </div>
+            
+            <div id="errorArea" class="hidden mt-8 text-center">
+                <button onclick="introduceError()" class="bg-red-600/20 text-red-400 border border-red-500 hover:bg-red-600/40 px-6 py-2 rounded-lg text-sm transition">Kablo Üzerinde Hata (Bozulma) Yarat</button>
+                <p id="errorMsg" class="mt-4 font-bold text-red-500 hidden">Kuyruktaki CRC denetimi başarısız! Çerçeve (Frame) çöpe atılacak.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function createFrame() {
+            const data = document.getElementById('payload').value;
+            if(!data) return;
+            document.getElementById('dataArea').innerText = data;
+            document.getElementById('dataArea').classList.remove('text-red-500');
+            document.getElementById('frameDisplay').classList.remove('hidden');
+            document.getElementById('errorArea').classList.remove('hidden');
+            document.getElementById('errorMsg').classList.add('hidden');
+        }
+
+        function introduceError() {
+            let data = document.getElementById('dataArea').innerText;
+            if(data.length > 0) {
+                // Rastgele bir biti tersine çevir
+                let index = Math.floor(Math.random() * data.length);
+                let newChar = data[index] === '1' ? '0' : '1';
+                let newData = data.substring(0, index) + newChar + data.substring(index + 1);
+                
+                document.getElementById('dataArea').innerText = newData;
+                document.getElementById('dataArea').classList.add('text-red-500');
+                document.getElementById('errorMsg').classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
