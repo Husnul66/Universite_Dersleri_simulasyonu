@@ -41,7 +41,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
-            max-width: 1300px;
+            max-width: 1350px;
             width: 100%;
             justify-content: center;
         }
@@ -125,7 +125,7 @@
         /* Sol: Fiziksel Bellek (Frames) */
         .memory-panel {
             flex: 1;
-            min-width: 250px;
+            min-width: 200px;
             border-top: 4px solid var(--accent-cyan);
             display: flex;
             flex-direction: column;
@@ -179,14 +179,11 @@
             font-size: 14px;
             font-style: italic;
         }
-        
-        .frame.highlight { background-color: rgba(80, 250, 123, 0.2); }
-        .frame.evict { background-color: rgba(255, 85, 85, 0.2); }
 
         /* Orta: Sayfa Tablosu (Page Table & History) */
         .page-table-panel {
-            flex: 2;
-            min-width: 400px;
+            flex: 2.2;
+            min-width: 450px;
             border-top: 4px solid var(--accent-pink);
         }
         
@@ -210,6 +207,11 @@
             background-color: rgba(139, 233, 253, 0.1);
         }
         tr.in-memory td:first-child { color: var(--accent-cyan); font-weight: bold;}
+
+        /* Yeni Frame Sütunu Stili */
+        .frame-col { font-weight: bold; }
+        tr.in-memory .frame-col { color: var(--accent-green); }
+        tr:not(.in-memory) .frame-col { color: #44475a; }
 
         .bit {
             display: inline-block;
@@ -292,7 +294,7 @@
                     <thead>
                         <tr>
                             <th>Sayfa</th>
-                            <th>Geçmiş (MSB...LSB)</th>
+                            <th>Frame</th> <th>Geçmiş (MSB...LSB)</th>
                             <th>Değer</th>
                             <th>Durum</th>
                         </tr>
@@ -365,7 +367,7 @@
             const inputVal = inputEl.value.trim();
             if(!inputVal) { alert("Lütfen arasına virgül koyarak sayfa numaraları girin. Örn: 3,2,3"); return; }
 
-            // Girdiyi diziye çevir (örn: "3, 2, 3" -> [3, 2, 3])
+            // Girdiyi diziye çevir
             let refArray = [];
             try {
                 refArray = inputVal.split(',').map(s => {
@@ -382,31 +384,28 @@
             document.getElementById('intervalDisplay').innerText = `Zaman Aralığı (Interval): ${currentInterval}`;
             log(`[Aralık ${currentInterval} Başladı] Referans Dizisi: [${refArray.join(', ')}]`, 'log-interval');
 
-            // 1. ADIM: Dizideki sayfalara sırayla eriş (Page Fault & Hit işlemleri)
+            // 1. ADIM: Dizideki sayfalara sırayla eriş (Page Fault & Hit)
             refArray.forEach(pageId => {
                 globalTime++;
-                pages[pageId].referencedThisInterval = true; // Bu aralıkta kullanıldı bayrağı
+                pages[pageId].referencedThisInterval = true; 
 
                 if (isInMemory(pageId)) {
                     log(`Sayfa ${pageId} çağrıldı -> <span class="log-hit">Bellekte (Hit)</span>`);
                 } else {
-                    // PAGE FAULT!
                     log(`Sayfa ${pageId} çağrıldı -> <span class="log-fault">Bellekte YOK (Fault)</span>`);
                     
                     let emptyIndex = frames.indexOf(null);
                     
                     if (emptyIndex !== -1) {
-                        // Boş yer var
                         frames[emptyIndex] = pageId;
                         pages[pageId].loadedAtTime = globalTime;
-                        log(`--> Sayfa ${pageId}, boş olan Çerçeve ${emptyIndex}'e <span class="log-load">yüklendi.</span>`);
+                        log(`--> Sayfa ${pageId}, boş olan Çerçeve F${emptyIndex}'e <span class="log-load">yüklendi.</span>`);
                     } else {
                         // Bellek Dolu -> Kurban Seçimi (SADECE BELLEKTEKİLER ARASINDA)
                         let victimFrameIndex = -1;
                         let lowestVal = Infinity;
                         let oldestTime = Infinity;
 
-                        // Çerçeveleri gez, en küçük değeri bul
                         for(let i=0; i<NUM_FRAMES; i++) {
                             let pId = frames[i];
                             let pObj = pages[pId];
@@ -416,7 +415,7 @@
                                 oldestTime = pObj.loadedAtTime;
                                 victimFrameIndex = i;
                             } else if (pObj.historyVal === lowestVal) {
-                                // Eşitlik durumu (FIFO mantığı - ilk yüklenen gider)
+                                // Eşitlik durumu (FIFO mantığı)
                                 if (pObj.loadedAtTime < oldestTime) {
                                     oldestTime = pObj.loadedAtTime;
                                     victimFrameIndex = i;
@@ -425,35 +424,31 @@
                         }
 
                         let victimPageId = frames[victimFrameIndex];
-                        log(`--> Hafıza dolu! Kurban seçiliyor... Frame ${victimFrameIndex}'teki Sayfa ${victimPageId} (Değer:${lowestVal}) <span class="log-evict">atıldı.</span>`);
+                        log(`--> Hafıza dolu! Kurban seçiliyor... Frame F${victimFrameIndex}'teki Sayfa ${victimPageId} (Değer:${lowestVal}) <span class="log-evict">atıldı.</span>`);
                         
-                        // Kurbanın geçmişini sıfırla
                         pages[victimPageId].historyVal = 0;
                         pages[victimPageId].loadedAtTime = -1;
 
-                        // Yeniyi yükle
                         frames[victimFrameIndex] = pageId;
                         pages[pageId].loadedAtTime = globalTime;
-                        log(`--> Sayfa ${pageId}, Çerçeve ${victimFrameIndex}'e <span class="log-load">yüklendi.</span>`);
+                        log(`--> Sayfa ${pageId}, Çerçeve F${victimFrameIndex}'e <span class="log-load">yüklendi.</span>`);
                     }
                 }
             });
 
-            // 2. ADIM: Aralık Sonu (End of Interval) İşlemleri -> Shift Right & Set MSB
+            // 2. ADIM: Aralık Sonu (End of Interval) -> Shift Right & Set MSB
             log(`Tüm istekler işlendi. Tüm sayfaların bitleri sağa kaydırılıyor (Shift >> 1)...`, 'log-shift');
             
             pages.forEach(p => {
-                // Sağa kaydır
                 p.historyVal = p.historyVal >> 1;
                 
-                // Bu aralıkta kullanıldıysa, en sola 1 ekle (128 = 10000000 binary)
                 if (p.referencedThisInterval) {
                     p.historyVal = p.historyVal | 128; 
-                    p.referencedThisInterval = false; // Sonraki aralık için sıfırla
+                    p.referencedThisInterval = false; 
                 }
             });
 
-            inputEl.value = ""; // Inputu temizle
+            inputEl.value = ""; 
             updateUI();
         }
 
@@ -493,12 +488,18 @@
             for(let i=0; i<TOTAL_PAGES; i++) {
                 let p = pages[i];
                 let inMem = isInMemory(i);
+                
+                // Sayfanın bulunduğu frame indeksini bul (Eğer RAM'de değilse -1 döner)
+                let frameIndex = frames.indexOf(i);
+                // Frame yazısını ayarla (Örn: F2) veya boş çizgi koy
+                let frameText = inMem ? `F${frameIndex}` : `-`;
+
                 let tr = document.createElement('tr');
                 if(inMem) tr.className = 'in-memory';
                 
                 tr.innerHTML = `
                     <td>${i}</td>
-                    <td>[ ${getBinaryHTML(p.historyVal)} ]</td>
+                    <td class="frame-col">${frameText}</td> <td>[ ${getBinaryHTML(p.historyVal)} ]</td>
                     <td class="val-col">${p.historyVal}</td>
                     <td style="color: ${inMem ? 'var(--accent-cyan)' : '#6272a4'}; font-size: 12px;">
                         ${inMem ? 'RAM\'de' : 'Diskte'}
