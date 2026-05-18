@@ -3,17 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Additional-Reference-Bits Algorithm (LRU Yaklaşımı) Simülasyonu</title>
+    <title>Additional-Reference-Bits Algorithm</title>
     <style>
         :root {
             --bg-color: #1e1e2e;
             --panel-bg: #282a36;
             --text-color: #f8f8f2;
             --accent-cyan: #8be9fd;
-            --accent-green: #50fa7b;
             --accent-pink: #ff79c6;
+            --accent-green: #50fa7b;
             --accent-red: #ff5555;
             --accent-orange: #ffb86c;
+            --accent-purple: #bd93f9;
+            --border-color: #44475a;
         }
 
         body {
@@ -37,9 +39,11 @@
 
         .container {
             display: flex;
+            flex-wrap: wrap;
             gap: 20px;
-            max-width: 1200px;
+            max-width: 1300px;
             width: 100%;
+            justify-content: center;
         }
 
         .panel {
@@ -47,289 +51,465 @@
             border-radius: 10px;
             padding: 20px;
             box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
         }
 
-        /* Sol Panel - Notlar */
-        .notes-panel {
-            flex: 1;
-            border-left: 4px solid var(--accent-pink);
-        }
-
-        .notes-panel h2 { color: var(--accent-pink); margin-top: 0; }
-        .notes-panel ul { padding-left: 20px; line-height: 1.6; color: #f1fa8c;}
-        .notes-panel li { margin-bottom: 10px; }
-
-        /* Orta Panel - Simülasyon */
-        .sim-panel {
-            flex: 2;
+        /* Üst Kontrol Paneli */
+        .control-panel {
+            width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
+            align-items: center;
+            border-top: 4px solid var(--accent-purple);
         }
 
-        .controls {
+        .input-group {
             display: flex;
-            gap: 10px;
+            gap: 15px;
+            align-items: center;
             flex-wrap: wrap;
             justify-content: center;
-            background: rgba(0,0,0,0.2);
-            padding: 15px;
-            border-radius: 8px;
         }
 
+        input[type="text"] {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 2px solid var(--accent-purple);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: monospace;
+            width: 300px;
+            letter-spacing: 2px;
+        }
+
+        input[type="text"]::placeholder { color: #6272a4; letter-spacing: normal;}
+
         button {
-            background-color: #44475a;
+            background-color: var(--hover-color);
             color: white;
-            border: 2px solid #6272a4;
-            padding: 10px 15px;
-            border-radius: 5px;
+            border: 2px solid transparent;
+            padding: 12px 20px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 16px;
             transition: all 0.2s;
         }
 
-        button:hover { background-color: #6272a4; transform: translateY(-2px); }
-        .btn-shift { background-color: var(--accent-green); color: #282a36; border-color: var(--accent-green); margin-left: auto;}
-        .btn-shift:hover { background-color: #40c863; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .btn-process { background-color: var(--accent-green); color: #282a36; }
+        .btn-process:hover { background-color: #40c863; }
+        .btn-reset { background-color: transparent; border: 2px solid var(--accent-red); color: var(--accent-red); }
+        .btn-reset:hover { background-color: var(--accent-red); color: white; }
 
-        .memory-board {
+        .current-interval-display {
+            font-size: 18px;
+            color: var(--accent-orange);
+            font-weight: bold;
+            background: rgba(255, 184, 108, 0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+            margin-top: 5px;
+        }
+
+        /* Ana İçerik Alanı */
+        .content-area {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        /* Sol: Fiziksel Bellek (Frames) */
+        .memory-panel {
+            flex: 1;
+            min-width: 250px;
+            border-top: 4px solid var(--accent-cyan);
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            align-items: center;
+        }
+
+        .memory-panel h2 { color: var(--accent-cyan); text-align: center; font-size: 1.2rem; margin-top: 0;}
+
+        .frames-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            width: 100%;
+            max-width: 250px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: var(--bg-color);
         }
 
         .frame {
             display: flex;
-            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--panel-bg);
+            transition: background-color 0.3s;
+        }
+        .frame:last-child { border-bottom: none; }
+
+        .frame-number {
             background-color: #44475a;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 5px solid #6272a4;
-            transition: all 0.3s ease;
-        }
-
-        .frame.empty { border-left-color: #44475a; opacity: 0.5; justify-content: center; font-style: italic;}
-        .frame.referenced { border-left-color: var(--accent-green); box-shadow: 0 0 10px rgba(80, 250, 123, 0.2); }
-        .frame.evicting { border-left-color: var(--accent-red); animation: shake 0.5s; }
-
-        .page-id {
-            font-size: 24px;
+            padding: 15px 10px;
             font-weight: bold;
-            color: var(--accent-orange);
-            width: 60px;
+            color: #f1fa8c;
+            width: 40px;
+            text-align: center;
+            border-right: 1px solid var(--border-color);
         }
 
-        .bits-container {
+        .frame-content {
             flex: 1;
             display: flex;
-            gap: 5px;
+            align-items: center;
             justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--accent-green);
         }
+
+        .frame.empty .frame-content {
+            color: #6272a4;
+            font-size: 14px;
+            font-style: italic;
+        }
+        
+        .frame.highlight { background-color: rgba(80, 250, 123, 0.2); }
+        .frame.evict { background-color: rgba(255, 85, 85, 0.2); }
+
+        /* Orta: Sayfa Tablosu (Page Table & History) */
+        .page-table-panel {
+            flex: 2;
+            min-width: 400px;
+            border-top: 4px solid var(--accent-pink);
+        }
+        
+        .page-table-panel h2 { color: var(--accent-pink); text-align: center; font-size: 1.2rem; margin-top: 0;}
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #44475a;
+        }
+
+        th { color: var(--accent-pink); font-weight: bold; background-color: rgba(0,0,0,0.2); }
+        
+        tr.in-memory {
+            background-color: rgba(139, 233, 253, 0.1);
+        }
+        tr.in-memory td:first-child { color: var(--accent-cyan); font-weight: bold;}
 
         .bit {
-            background: #282a36;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-family: 'Courier New', Courier, monospace;
-            font-weight: bold;
-            font-size: 18px;
+            display: inline-block;
+            width: 15px;
+            text-align: center;
+            color: #6272a4;
         }
-        .bit.one { color: var(--accent-green); text-shadow: 0 0 5px var(--accent-green); }
-        .bit.zero { color: #6272a4; }
+        .bit.one { color: var(--accent-green); font-weight: bold; text-shadow: 0 0 5px var(--accent-green);}
+        
+        .val-col { color: var(--accent-orange); font-weight: bold; }
 
-        .decimal-val {
-            font-size: 18px;
-            color: var(--accent-cyan);
-            width: 100px;
-            text-align: right;
-        }
-
-        .status-badge {
-            font-size: 12px;
-            padding: 4px 8px;
-            border-radius: 10px;
-            background: var(--accent-green);
-            color: #282a36;
-            margin-left: 10px;
-            display: none;
-        }
-        .frame.referenced .status-badge { display: inline-block; }
-
-        /* Sağ Panel - Loglar */
+        /* Sağ: Loglar */
         .log-panel {
-            flex: 1;
+            flex: 1.5;
+            min-width: 300px;
             background: #000;
-            font-family: 'Courier New', Courier, monospace;
-            padding: 15px;
             border-radius: 10px;
-            height: 400px;
-            overflow-y: auto;
-            border: 1px solid #44475a;
+            padding: 15px;
+            border-top: 4px solid var(--accent-orange);
+            display: flex;
+            flex-direction: column;
         }
-        .log-entry { margin-bottom: 8px; font-size: 14px; border-bottom: 1px dashed #44475a; padding-bottom: 5px;}
-        .log-success { color: var(--accent-green); }
-        .log-error { color: var(--accent-red); }
-        .log-info { color: var(--accent-cyan); }
-        .log-warning { color: var(--accent-orange); }
+        
+        .log-panel h2 { color: var(--accent-orange); font-size: 1.2rem; margin-top: 0; text-align: center;}
 
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            75% { transform: translateX(-5px); }
-            100% { transform: translateX(0); }
+        .log-container {
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            max-height: 500px;
         }
+
+        .log-entry { margin-bottom: 8px; border-bottom: 1px dashed #44475a; padding-bottom: 5px; line-height: 1.4;}
+        .log-interval { color: var(--accent-purple); font-weight: bold; font-size: 16px; margin-top: 15px; border-bottom: 2px solid;}
+        .log-fault { color: var(--accent-red); }
+        .log-load { color: var(--accent-cyan); }
+        .log-hit { color: var(--accent-green); }
+        .log-evict { color: var(--accent-orange); }
+        .log-shift { color: #f1fa8c; font-style: italic;}
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: #6272a4; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-purple); }
+
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Additional-Reference-Bits Algorithm (Ek Referans Bitleri Algoritması)</h1>
-        <p class="subtitle">LRU (En Az Yakın Zamanda Kullanılan) Yaklaşımı Simülasyonu</p>
+        <h1>Ek Referans Bitleri Algoritması (Akademik Model)</h1>
+        <p class="subtitle">Zaman Aralıkları ve Dikey Çerçeve Mantığı ile LRU Yaklaşımı</p>
     </header>
 
     <div class="container">
-        <div class="panel notes-panel">
-            <h2>📌 Önemli Notlar</h2>
-            <ul>
-                <li><strong>Amaç:</strong> Gerçek bir LRU donanımı pahalıdır. Bu algoritma, "hangi sayfa daha eski?" sorusunu 8-bitlik bir geçmiş tutarak tahmin eder.</li>
-                <li><strong>Referans:</strong> Bir sayfa çağrıldığında o anki zaman dilimi için "kullanıldı" (Referans) olarak işaretlenir.</li>
-                <li><strong>Kaydırma (Shift):</strong> Zaman ilerlediğinde, tüm sayfaların bitleri sağa kayar <code>(>> 1)</code>. Kullanılanların en soluna <strong>1</strong>, kullanılmayanlara <strong>0</strong> eklenir.</li>
-                <li><strong>Kurban Seçimi:</strong> Bellek dolduğunda (Page Fault), 8-bitlik geçmişi ondalık (decimal) sayı olarak okunur. <strong>Değeri en küçük olan</strong> sayfa acımasızca RAM'den atılır!</li>
-                <li><strong>Eşitlik Durumu:</strong> Değerler eşitse, belleğe en önce giren (FIFO) atılır.</li>
-            </ul>
+        
+        <div class="panel control-panel">
+            <div class="input-group">
+                <input type="text" id="refStringInput" placeholder="Örn: 3,2,3 veya 8,0,3" autocomplete="off">
+                <button class="btn-process" onclick="processInterval()">Aralığı İşle & Kaydır >></button>
+                <button class="btn-reset" onclick="resetSim()">Sıfırla</button>
+            </div>
+            <div class="current-interval-display" id="intervalDisplay">Zaman Aralığı (Interval): 0</div>
+            <p style="color: #6272a4; font-size: 13px; margin: 0; text-align: center;">Hocanın tahtadaki örneği için sırayla yazıp işleyin: <b>3,2,3</b> (İşle) -> <b>8,0,3</b> (İşle) -> <b>3,0,2</b> (İşle) -> <b>6,3,4,7</b> (İşle)</p>
         </div>
 
-        <div class="sim-panel">
-            <div class="controls">
-                <button onclick="requestPage('A')">A Sayfasını İste</button>
-                <button onclick="requestPage('B')">B Sayfasını İste</button>
-                <button onclick="requestPage('C')">C Sayfasını İste</button>
-                <button onclick="requestPage('D')">D Sayfasını İste</button>
-                <button onclick="requestPage('E')">E Sayfasını İste</button>
-                <button class="btn-shift" onclick="advanceTime()">⏱️ Zamanı İlerlet (Shift >>)</button>
+        <div class="content-area">
+            <div class="panel memory-panel">
+                <h2>Fiziksel Bellek</h2>
+                <div class="frames-container" id="framesContainer">
+                    </div>
+                <div style="margin-top:15px; text-align:center; color:#6272a4; font-size: 13px;">Kapasite: 5 Çerçeve</div>
             </div>
 
-            <div class="memory-board" id="memory-board">
-                </div>
-        </div>
+            <div class="panel page-table-panel">
+                <h2>Sayfa Tablosu (0-9) & 8-Bit Geçmiş</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sayfa</th>
+                            <th>Geçmiş (MSB...LSB)</th>
+                            <th>Değer</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pageTableBody">
+                        </tbody>
+                </table>
+            </div>
 
-        <div class="log-panel" id="log-panel">
-            <div class="log-entry log-info">Sistem başlatıldı. Bellek kapasitesi: 3 Frame.</div>
+            <div class="panel log-panel">
+                <h2>İşlem Adımları</h2>
+                <div class="log-container" id="logContainer">
+                    <div class="log-entry" style="color: #6272a4;">Sistem başlatıldı. Bellek boş.</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        const MEMORY_CAPACITY = 3;
-        let memory = []; // { id: 'A', value: 0, referenced: false, loadTime: 0 }
-        let timeTick = 0;
+        // --- SİSTEM DURUMU (STATE) ---
+        const NUM_FRAMES = 5;
+        const TOTAL_PAGES = 10; // 0'dan 9'a kadar
+        
+        let frames = Array(NUM_FRAMES).fill(null); // null = boş. Doluysa Sayfa No (int)
+        let pages = []; // Sayfa nesnelerini tutar {id, historyVal, referencedThisInterval, loadedAtTime}
+        let currentInterval = 0;
+        let globalTime = 0; // FIFO eşitliği bozmak için yükleme zamanını takip eder
 
-        const memoryBoard = document.getElementById('memory-board');
-        const logPanel = document.getElementById('log-panel');
-
-        function log(msg, type = 'info') {
-            const div = document.createElement('div');
-            div.className = `log-entry log-${type}`;
-            div.innerHTML = `[Zaman:${timeTick}] ${msg}`;
-            logPanel.appendChild(div);
-            logPanel.scrollTop = logPanel.scrollHeight; // Oto scroll
+        // Başlangıç Ayarı
+        function initSystem() {
+            frames = Array(NUM_FRAMES).fill(null);
+            pages = [];
+            for(let i=0; i<TOTAL_PAGES; i++) {
+                pages.push({
+                    id: i,
+                    historyVal: 0, // 0 = 00000000
+                    referencedThisInterval: false,
+                    loadedAtTime: -1 // Bellekte değil
+                });
+            }
+            currentInterval = 0;
+            globalTime = 0;
+            updateUI();
         }
 
+        // --- YARDIMCI FONKSİYONLAR ---
         function getBinaryHTML(val) {
             const binStr = val.toString(2).padStart(8, '0');
             return binStr.split('').map(b => 
-                `<span class="bit ${b === '1' ? 'one' : 'zero'}">${b}</span>`
+                `<span class="bit ${b === '1' ? 'one' : ''}">${b}</span>`
             ).join('');
         }
 
-        function renderMemory() {
-            memoryBoard.innerHTML = '';
-            
-            for (let i = 0; i < MEMORY_CAPACITY; i++) {
-                const frameDiv = document.createElement('div');
-                
-                if (i < memory.length) {
-                    const page = memory[i];
-                    frameDiv.className = `frame ${page.referenced ? 'referenced' : ''}`;
-                    frameDiv.innerHTML = `
-                        <div class="page-id">${page.id}</div>
-                        <div class="bits-container">${getBinaryHTML(page.value)}</div>
-                        <div class="decimal-val">Val: ${page.value}</div>
-                        <span class="status-badge">Kullanıldı</span>
-                    `;
-                } else {
-                    frameDiv.className = 'frame empty';
-                    frameDiv.innerHTML = `[ Boş Çerçeve (Frame) ]`;
-                }
-                memoryBoard.appendChild(frameDiv);
-            }
+        function log(msg, type = '') {
+            const container = document.getElementById('logContainer');
+            const div = document.createElement('div');
+            div.className = `log-entry ${type}`;
+            div.innerHTML = msg;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
         }
 
-        function requestPage(pageId) {
-            timeTick++;
-            
-            // Bellekte var mı kontrol et (Hit)
-            let existingPage = memory.find(p => p.id === pageId);
-            
-            if (existingPage) {
-                existingPage.referenced = true;
-                log(`Sayfa ${pageId} çağrıldı -> <span class="log-success">PAGE HIT!</span> Referans biti 1 için işaretlendi.`, 'success');
-            } else {
-                // Bellekte yok (Fault)
-                log(`Sayfa ${pageId} çağrıldı -> <span class="log-error">PAGE FAULT!</span>`, 'error');
-                
-                if (memory.length < MEMORY_CAPACITY) {
-                    // Boş yer var
-                    memory.push({ id: pageId, value: 0, referenced: true, loadTime: timeTick });
-                    log(`Sayfa ${pageId} boş çerçeveye yüklendi.`, 'info');
+        function isInMemory(pageId) {
+            return frames.includes(pageId);
+        }
+
+        // --- ANA ALGORİTMA MANTIĞI ---
+        function processInterval() {
+            const inputEl = document.getElementById('refStringInput');
+            const inputVal = inputEl.value.trim();
+            if(!inputVal) { alert("Lütfen arasına virgül koyarak sayfa numaraları girin. Örn: 3,2,3"); return; }
+
+            // Girdiyi diziye çevir (örn: "3, 2, 3" -> [3, 2, 3])
+            let refArray = [];
+            try {
+                refArray = inputVal.split(',').map(s => {
+                    let num = parseInt(s.trim());
+                    if(isNaN(num) || num < 0 || num > 9) throw "Geçersiz";
+                    return num;
+                });
+            } catch(e) {
+                alert("Hatalı giriş! Sadece 0-9 arası sayıları virgülle ayırarak girin.");
+                return;
+            }
+
+            currentInterval++;
+            document.getElementById('intervalDisplay').innerText = `Zaman Aralığı (Interval): ${currentInterval}`;
+            log(`[Aralık ${currentInterval} Başladı] Referans Dizisi: [${refArray.join(', ')}]`, 'log-interval');
+
+            // 1. ADIM: Dizideki sayfalara sırayla eriş (Page Fault & Hit işlemleri)
+            refArray.forEach(pageId => {
+                globalTime++;
+                pages[pageId].referencedThisInterval = true; // Bu aralıkta kullanıldı bayrağı
+
+                if (isInMemory(pageId)) {
+                    log(`Sayfa ${pageId} çağrıldı -> <span class="log-hit">Bellekte (Hit)</span>`);
                 } else {
-                    // Boş yer yok, kurban seç (En küçük değer, eşitse en eski)
-                    let victimIndex = 0;
-                    for (let i = 1; i < memory.length; i++) {
-                        if (memory[i].value < memory[victimIndex].value) {
-                            victimIndex = i;
-                        } else if (memory[i].value === memory[victimIndex].value) {
-                            // Değerler eşitse FIFO (loadTime en küçük olan)
-                            if (memory[i].loadTime < memory[victimIndex].loadTime) {
-                                victimIndex = i;
+                    // PAGE FAULT!
+                    log(`Sayfa ${pageId} çağrıldı -> <span class="log-fault">Bellekte YOK (Fault)</span>`);
+                    
+                    let emptyIndex = frames.indexOf(null);
+                    
+                    if (emptyIndex !== -1) {
+                        // Boş yer var
+                        frames[emptyIndex] = pageId;
+                        pages[pageId].loadedAtTime = globalTime;
+                        log(`--> Sayfa ${pageId}, boş olan Çerçeve ${emptyIndex}'e <span class="log-load">yüklendi.</span>`);
+                    } else {
+                        // Bellek Dolu -> Kurban Seçimi (SADECE BELLEKTEKİLER ARASINDA)
+                        let victimFrameIndex = -1;
+                        let lowestVal = Infinity;
+                        let oldestTime = Infinity;
+
+                        // Çerçeveleri gez, en küçük değeri bul
+                        for(let i=0; i<NUM_FRAMES; i++) {
+                            let pId = frames[i];
+                            let pObj = pages[pId];
+                            
+                            if (pObj.historyVal < lowestVal) {
+                                lowestVal = pObj.historyVal;
+                                oldestTime = pObj.loadedAtTime;
+                                victimFrameIndex = i;
+                            } else if (pObj.historyVal === lowestVal) {
+                                // Eşitlik durumu (FIFO mantığı - ilk yüklenen gider)
+                                if (pObj.loadedAtTime < oldestTime) {
+                                    oldestTime = pObj.loadedAtTime;
+                                    victimFrameIndex = i;
+                                }
                             }
                         }
-                    }
-                    
-                    const victim = memory[victimIndex];
-                    log(`Hafıza dolu! Kurban seçiliyor... Sayfa ${victim.id} (Değer: ${victim.value}) bellekten atıldı.`, 'warning');
-                    
-                    // Görsel efekt için bekle
-                    const frames = document.querySelectorAll('.frame');
-                    if(frames[victimIndex]) frames[victimIndex].classList.add('evicting');
-                    
-                    // Kurbanı at, yeniyi ekle
-                    memory.splice(victimIndex, 1, { id: pageId, value: 0, referenced: true, loadTime: timeTick });
-                }
-            }
-            renderMemory();
-        }
 
-        function advanceTime() {
-            timeTick++;
-            log(`---- ZAMAN İLERLETİLDİ (Shift İşlemi) ----`, 'warning');
-            
-            memory.forEach(page => {
-                // Sağa kaydır (1 bit)
-                page.value = page.value >> 1;
-                
-                // Eğer bu zaman diliminde referans edildiyse, en sola 1 ekle (128 = 10000000)
-                if (page.referenced) {
-                    page.value = page.value | 128; 
-                    page.referenced = false; // Flag'i sıfırla
+                        let victimPageId = frames[victimFrameIndex];
+                        log(`--> Hafıza dolu! Kurban seçiliyor... Frame ${victimFrameIndex}'teki Sayfa ${victimPageId} (Değer:${lowestVal}) <span class="log-evict">atıldı.</span>`);
+                        
+                        // Kurbanın geçmişini sıfırla
+                        pages[victimPageId].historyVal = 0;
+                        pages[victimPageId].loadedAtTime = -1;
+
+                        // Yeniyi yükle
+                        frames[victimFrameIndex] = pageId;
+                        pages[pageId].loadedAtTime = globalTime;
+                        log(`--> Sayfa ${pageId}, Çerçeve ${victimFrameIndex}'e <span class="log-load">yüklendi.</span>`);
+                    }
                 }
             });
+
+            // 2. ADIM: Aralık Sonu (End of Interval) İşlemleri -> Shift Right & Set MSB
+            log(`Tüm istekler işlendi. Tüm sayfaların bitleri sağa kaydırılıyor (Shift >> 1)...`, 'log-shift');
             
-            renderMemory();
+            pages.forEach(p => {
+                // Sağa kaydır
+                p.historyVal = p.historyVal >> 1;
+                
+                // Bu aralıkta kullanıldıysa, en sola 1 ekle (128 = 10000000 binary)
+                if (p.referencedThisInterval) {
+                    p.historyVal = p.historyVal | 128; 
+                    p.referencedThisInterval = false; // Sonraki aralık için sıfırla
+                }
+            });
+
+            inputEl.value = ""; // Inputu temizle
+            updateUI();
         }
 
-        // Başlangıç ekranını çiz
-        renderMemory();
+        function resetSim() {
+            document.getElementById('logContainer').innerHTML = '<div class="log-entry" style="color: #6272a4;">Sistem sıfırlandı.</div>';
+            document.getElementById('refStringInput').value = "";
+            initSystem();
+        }
+
+        // --- ARAYÜZÜ GÜNCELLEME ---
+        function updateUI() {
+            // Çerçeveleri Çiz
+            const framesContainer = document.getElementById('framesContainer');
+            framesContainer.innerHTML = '';
+            for(let i=0; i<NUM_FRAMES; i++) {
+                let div = document.createElement('div');
+                let pageInFrame = frames[i];
+                if(pageInFrame !== null) {
+                    div.className = 'frame';
+                    div.innerHTML = `
+                        <div class="frame-number">F${i}</div>
+                        <div class="frame-content">Sayfa ${pageInFrame}</div>
+                    `;
+                } else {
+                    div.className = 'frame empty';
+                    div.innerHTML = `
+                        <div class="frame-number">F${i}</div>
+                        <div class="frame-content">Boş</div>
+                    `;
+                }
+                framesContainer.appendChild(div);
+            }
+
+            // Tabloyu Çiz
+            const tableBody = document.getElementById('pageTableBody');
+            tableBody.innerHTML = '';
+            for(let i=0; i<TOTAL_PAGES; i++) {
+                let p = pages[i];
+                let inMem = isInMemory(i);
+                let tr = document.createElement('tr');
+                if(inMem) tr.className = 'in-memory';
+                
+                tr.innerHTML = `
+                    <td>${i}</td>
+                    <td>[ ${getBinaryHTML(p.historyVal)} ]</td>
+                    <td class="val-col">${p.historyVal}</td>
+                    <td style="color: ${inMem ? 'var(--accent-cyan)' : '#6272a4'}; font-size: 12px;">
+                        ${inMem ? 'RAM\'de' : 'Diskte'}
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            }
+        }
+
+        // İlk Yükleme
+        window.onload = initSystem;
     </script>
 </body>
 </html>
